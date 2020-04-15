@@ -51,50 +51,8 @@ class Tab extends React.Component {
                     style={{ lineHeight: '64px' }}
                 >
                     <Menu.Item key="01">
-                        <a href="#/">basePrice</a>
+                        <a href="#/">home</a>
                     </Menu.Item>
-                    <Menu.Item key="02">
-                        <a href="#/chart02">baseQty</a>
-                    </Menu.Item>
-                    <Menu.Item key="03">
-                        <a href="#/chart03">queryBps</a>
-                    </Menu.Item>
-                    <Menu.Item key="04">
-                        <a href="#/chart04">queryBtc</a>
-                    </Menu.Item>
-                    <Menu.Item key="05">
-                        <a href="#/option05">操作</a>
-                    </Menu.Item>
-                    <Menu.Item key="11">
-                        <a href="#/chart11">对比</a>
-                    </Menu.Item>
-                    <Menu.Item key="12">
-                        <a href="#/chart12">增量</a>
-                    </Menu.Item>
-                    <SubMenu key="params" title="表格">
-                        <Menu.Item key="06">
-                            <a href="#/table06">表格</a>
-                        </Menu.Item>
-                        <Menu.Item key="07">
-                            <a href="#/table07">basePrice表格</a>
-                        </Menu.Item>
-                        <Menu.Item key="08">
-                            <a href="#/table08">baseQty表格</a>
-                        </Menu.Item>
-                        <Menu.Item key="09">
-                            <a href="#/table09">queryBps表格</a>
-                        </Menu.Item>
-                        <Menu.Item key="10">
-                            <a href="#/table10">queryBtc表格</a>
-                        </Menu.Item>
-                        <Menu.Item key="13">
-                            <a href="#/download13">下载记录</a>
-                        </Menu.Item>
-                        <Menu.Item key="14">
-                            <a href="#/config14">配置</a>
-                        </Menu.Item>
-                    </SubMenu>
-                  
                 </Menu>
             </Header>
         );

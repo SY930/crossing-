@@ -1,109 +1,41 @@
-._btn {
-    display: inline;
-    padding: 2px 4px;
-    border-radius: 4px;
-    font-size: 12px;
-    &.execute_btn {
-        background: red;
-        color: #ffffff;
-    }
-    &.noexecute_btn {
-        background: green;
-        color: #ffffff;
-    }
-}
-.finish{
-    color: green;
-}
-.unfinish {
-    color: red;
-}
-
-      
-.capital-accounts {
-    margin-top: 40px;
-    background: #ffffff;
-    min-height: 500px;
-    padding: 50px 40px;
-    .ant-table {
-      .ant-table-content {
-        // .ant-table-body {
-          table {
-            .column-width {
-              &:nth-child(1) {
-                width: 90px;
-                min-width: 90px;
-                max-width: 90px;
-              }
-              &:nth-child(2) {
-                width: 80px;
-                min-width: 80px;
-                max-width: 80px;
-              }
-              &:nth-child(3) {
-                width: 80px;
-                min-width: 80px;
-                max-width: 80px;
-              }
-              &:nth-child(4) {
-                width: 80px;
-                min-width: 80px;
-                max-width: 80px;
-              }
-              &:nth-child(5) {
-                width: 80px;
-                min-width: 80px;
-                max-width: 80px;
-              }
-              &:nth-child(6) {
-                width: 80px;
-                min-width: 80px;
-                max-width: 80px;
-              }
-              &:nth-child(7) {
-                width: 120px;
-                min-width: 120px;
-                max-width: 120px;
-              }
-            }
-            tr {
-              th {
-                @extend .column-width;
-              }
-            }
-            td {
-              @extend .column-width;
-              .ant-form-item {
-                margin: 0;
-                width: 100%;
-                .ant-form-item-control {
-                  line-height: 24px;
-                  .editable-cell-input {
-                    padding: 0 4px;
-                    line-height: 20px;
-                    height: 24px;
-                    width: 150px;
-                    width: 100%;
-                  }
-                }
-              }
-            }
-            editable-cell {
-              position: relative;
-            }
-            
-            .editable-cell-value-wrap {
-              padding: 5px 12px;
-              cursor: pointer;
-            }
-            
-            .editable-row:hover .editable-cell-value-wrap {
-              border: 1px solid #d9d9d9;
-              border-radius: 4px;
-              padding: 4px 11px;
-            }
-      }
+.main-page {
+  background: #ffffff;
+  min-height: 550px;
+  .list-title {
+    padding: 50px 15px 0;
+  }
+  .table-top {
+    margin-bottom: 20px;
+  }
+  .f_Box {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    background: rgb(247, 247, 247);
+    border: 1px solid #e2e2e2;
+  }
+  .f_center {
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: column;
+    min-height: 260px;
+    background: none;
+    flex: 1 1 0%;
+    margin: 15px 0px;
+    padding: 0px 20px;
+    &:first-child {
+      border-right: 1px solid rgb(226, 226, 226);
     }
   }
+  .ant-form label {
+    font-size: 12px;
+  }
+  .ant-form-item {
+    margin-bottom: 0;
+  }
+  .ant-input {
+    font-size: 12px;
+    height: 26px;
+  }
+
 }
-// }
