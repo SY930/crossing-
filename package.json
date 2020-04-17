@@ -139,6 +139,6 @@
       "react-app"
     ]
   },
-  "proxy": "http://172.16.11.196:9088",
+  "proxy": "http://172.16.11.196:9301",
   "devDependencies": {}
 }

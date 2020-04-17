@@ -2,9 +2,12 @@
   background: #ffffff;
   min-height: 550px;
   .list-title {
-    padding: 50px 15px 0;
+    padding: 50px 15px;
   }
   .table-top {
+    margin-bottom: 20px;
+  }
+  .f_select {
     margin-bottom: 20px;
   }
   .f_Box {
@@ -36,6 +39,9 @@
   .ant-input {
     font-size: 12px;
     height: 26px;
+  }
+  .ant-form-item-label {
+    text-align: left;
   }
 
 }
