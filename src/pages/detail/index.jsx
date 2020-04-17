@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import { Row, Col, Table, Form, Input, Button, Select } from 'antd'
+import { Row, Col, Table, Form, Input, Button, Select,  } from 'antd'
 import { getSymbols } from '../../api/detail'
 import _ from 'lodash'
 import moment from 'moment';
@@ -310,18 +310,18 @@ class index extends Component {
                                         <h3>买入 {this.state.defaultValue ? this.state.defaultValue.split('_')[0] : ''} </h3>
                                         <Form.Item label="价格" labelCol={{ span: 8 }} wrapperCol={{ span: 16 }}>
                                             {getFieldDecorator('note', {
-                                                rules: [{ required: true, message: 'Please input your note!' }],
-                                            })(<Input />)}
+                                                rules: [{ required: true, message: '请输入价格！' }],
+                                            })(<Input type="number"/>)}
                                         </Form.Item>
                                         <Form.Item label="数量" labelCol={{ span: 8 }} wrapperCol={{ span: 16 }}>
                                             {getFieldDecorator('gender', {
-                                                rules: [{ required: true, message: 'Please select your gender!' }],
-                                            })(<Input />)}
+                                                rules: [{ required: true, message: '请输入数量！' }],
+                                            })(<Input  type="number"/>)}
                                         </Form.Item>
                                         <Form.Item label="成交额" labelCol={{ span: 8 }} wrapperCol={{ span: 16 }}>
                                             {getFieldDecorator('e', {
                                                 rules: [{ required: true, message: 'Please select your gender!' }],
-                                            })(<Input />)}
+                                            })(<Input disabled />)}
                                         </Form.Item>
                                         <Form.Item wrapperCol={{ span: 12, offset: 8 }} style={{ marginTop: 25 }}>
                                             <Button type="primary" htmlType="submit">
@@ -334,19 +334,22 @@ class index extends Component {
                                     <Form onSubmit={this.handleSubmit}>
                                         <h3>买出 {this.state.defaultValue ? this.state.defaultValue.split('_')[0] : ''} </h3>
                                         <Form.Item label="价格" labelCol={{ span: 8 }} wrapperCol={{ span: 16 }}>
-                                            {getFieldDecorator('note', {
-                                                rules: [{ required: true, message: 'Please input your note!' }],
-                                            })(<Input />)}
+                                            {getFieldDecorator('note1', {
+                                                rules: [
+                                                    { required: true, message: '请输入价格！' },
+                                                    
+                                                ],
+                                            })(<Input  type="number"/>)}
                                         </Form.Item>
                                         <Form.Item label="数量" labelCol={{ span: 8 }} wrapperCol={{ span: 16 }}>
-                                            {getFieldDecorator('gender', {
-                                                rules: [{ required: true, message: 'Please select your gender!' }],
-                                            })(<Input />)}
+                                            {getFieldDecorator('gender1', {
+                                                rules: [{ required: true, message: '请输入数量！' }],
+                                            })(<Input  type="number"/>)}
                                         </Form.Item>
                                         <Form.Item label="成交额" labelCol={{ span: 8 }} wrapperCol={{ span: 16 }}>
-                                            {getFieldDecorator('e', {
+                                            {getFieldDecorator('e1', {
                                                 rules: [{ required: true, message: 'Please select your gender!' }],
-                                            })(<Input />)}
+                                            })(<Input disabled />)}
                                         </Form.Item>
                                         <Form.Item wrapperCol={{ span: 12, offset: 8 }} style={{ marginTop: 25 }}>
                                             <Button type="primary" htmlType="submit">
