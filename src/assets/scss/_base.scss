@@ -43,5 +43,21 @@
   .ant-form-item-label {
     text-align: left;
   }
+  .ant-table-thead> tr> th, .ant-table-tbody > tr > td {
+    line-height: 10px;
+  }
 
+  .sell {
+    td.price{
+      color: red;
+    }
+  }
+  .buy {
+    .price {
+      color: green;
+    }
+  }
+  .ant-table-scroll {
+    height: 263px;
+  }
 }

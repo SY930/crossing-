@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import { Row, Col, Table, Form, Input, Button, Select,  } from 'antd'
+import { Row, Col, Table, Form, Input, Button, Select, message } from 'antd'
 import { getSymbols } from '../../api/detail'
 import _ from 'lodash'
 import moment from 'moment';
@@ -11,6 +11,7 @@ const columns = (app) => ([
         title: '价格',
         dataIndex: 'price',
         key: 'price',
+        className: 'price',
         width: 90,
     },
     {
@@ -77,8 +78,9 @@ class index extends Component {
         rightDown: [],
         optSelect: [],
         defaultValue: '',
-        accuracy: '',
-        lotSize: '',
+        accuracy: 0,
+        lotSize: 0,
+        sym: '',
         orderbookData: {
             state: true,
             type: 'orderbook',
@@ -100,28 +102,33 @@ class index extends Component {
         }
     }
 
-    orderbookData = [{
-        state: true,
-        type: 'orderbook',
-        object: {
-            sym: "BTC_USDT",
-            a: [["8000", "2"], ["6000", "9"], ["5000", "9"]],
-            b: [["7000", "2"], ["2000", "3"]],
-        }
-    },];
-    tradeData = [{
-        state: true,
-        type: 'trade',
-        object: {
-            executeId: "4fb8f1ef-1915-49c5-86d9-345189051d17",
-            dealCount: 1,
-            dealPrice: 8000,
-            time: 1587109050133,
-        }
-    }];
+    orderbookData = [
+        //     {
+        //     state: true,
+        //     type: 'orderbook',
+        //     object: {
+        //         sym: "BTC_USDT",
+        //         a: [["8000", "2"], ["6000", "9"], ["5000", "9"]],
+        //         b: [["7000", "2"], ["2000", "3"]],
+        //     }
+        // },
+    ];
+    tradeData = [
+        //     {
+        //     state: true,
+        //     type: 'trade',
+        //     object: {
+        //         executeId: "4fb8f1ef-1915-49c5-86d9-345189051d17",
+        //         dealCount: 1,
+        //         dealPrice: 8000,
+        //         time: 1587109050133,
+        //     }
+        // }
+    ];
 
     allLeftTopData = [];
     allLeftDownData = [];
+    allRightDown = [];
 
     componentDidMount() {
         const url = window.location.hash.split('/')
@@ -131,14 +138,20 @@ class index extends Component {
         const symbols = `${symbol[0]}/${symbol[1]}`
         this.setState({
             symbols,
+            sym: this.sym,
+        }, () => {
+            this.initSocket();
         })
-        this.initSocket(this.state.orderbookData);
-        this.initSocket(this.state.tradeData);
+        // this.initSocket(this.state.orderbookData);
+        // this.initSocket(this.state.tradeData);
         this.getExchangeSymbols()
     }
 
     getExchangeSymbols = () => {
-        const obj = [{ sym: 'VET_USDT', accuracy: 4, lotSize: 0.2 }, { sym: 'VET_BTC', accuracy: 4, lotSize: 0.3 }, { sym: 'VET_ETH', accuracy: 4, lotSize: 0.1 }]; // lotSize是数量的最小值，accuracy是价格后面小数点最多的位数
+        const data = {
+            code: 1200,
+            obj: [{ sym: 'BTC_USDT', accuracy: 4, lotSize: 0.2 }, { sym: 'VET_BTC', accuracy: 4, lotSize: 0.3 }, { sym: 'VET_ETH', accuracy: 4, lotSize: 0.1 }] // lotSize是数量的最小值，accuracy是价格后面小数点最多的位数
+        } 
         getSymbols().then((data) => {
             const url = window.location.hash.split('/');
             const defaultValue = url[url.length - 1];
@@ -147,52 +160,48 @@ class index extends Component {
                 this.setState({
                     optSelect: data.obj,
                     defaultValue,
-                    lotSize: defaultObj.lotSize,
-                    accuracy: defaultObj.accuracy,
+                    lotSize: defaultObj[0].lotSize,
+                    accuracy: defaultObj[0].accuracy,
                 })
             }
         })
     }
 
-    initSocket = (received_msg) => {
+    initSocket = () => {
         const self = this;
-        if (received_msg.type === 'trade') {
-            this.tradeData = _.concat(this.tradeData, received_msg);
-        } else {
-            this.orderbookData = _.concat(this.orderbookData, received_msg);
+        // if (received_msg.type === 'trade') {
+        //     this.tradeData = _.concat(this.tradeData, received_msg);
+        // } else {
+        //     this.orderbookData = _.concat(this.orderbookData, received_msg);
+        // }
+        // this.delData();
+        if ("WebSocket" in window) {
+            //    alert("您的浏览器支持 WebSocket!");     
+            // 打开一个 web socket
+            this.ws = new WebSocket("ws://172.16.11.196:9305/websocket/client123");
+            this.ws.onopen = function () {
+                self.onWebsocket(self.state.sym);
+            };
+
+            this.ws.onmessage = function (evt) {
+                // console.log(evt);
+                const received_msg = JSON.parse(evt.data);
+                // console.log('object', JSON.parse(received_msg));
+
+                self.delData(received_msg);
+                //   alert("数据已接收...");
+            };
+
+            this.ws.onclose = function () {
+                // 关闭 websocket
+                message.error("连接已关闭...");
+            };
         }
-        this.delData();
-        // if ("WebSocket" in window) {
-        //     //    alert("您的浏览器支持 WebSocket!");     
-        //     // 打开一个 web socket
-        //     this.ws = new WebSocket("ws://172.16.11.196:9305/websocket/client123");
-        //     this.ws.onopen = function () {
-        //         self.onWebsocket(this.sym);
-        //     };
 
-        //     this.ws.onmessage = function (evt) {
-        //         console.log(evt);
-        //         const received_msg = JSON.parse(evt.data);
-        //         // console.log('object', JSON.parse(received_msg));
-        //         // if (received_msg.type === 'trade') {
-        //         //     this.tradeData = _.concat(this.tradeData, received_msg);
-        //         // } else {
-        //         //     this.orderData = _.concat(this.orderData, received_msg);
-        //         // }
-        //         // self.delData(received_msg);
-        //         //   alert("数据已接收...");
-        //     };
-
-        //     this.ws.onclose = function () {
-        //         // 关闭 websocket
-        //         alert("连接已关闭...");
-        //     };
-        // }
-
-        // else {
-        //     // 浏览器不支持 WebSocket
-        //     alert("您的浏览器不支持 WebSocket!");
-        // }
+        else {
+            // 浏览器不支持 WebSocket
+            message.error("您的浏览器不支持 WebSocket!");
+        }
     }
 
     onWebsocket = (sym) => {
@@ -209,40 +218,60 @@ class index extends Component {
             sym
         }
         this.ws.send(JSON.stringify(orderbookObj));
-        // this.ws.send(JSON.stringify(tradeObj));
+        this.ws.send(JSON.stringify(tradeObj));
     }
 
-    delData = () => {
-        console.log('===', this.orderbookData, this.tradeData);
-        const orderbookData = this.orderbookData;
-        _.map(orderbookData, (item) => {
-            const leftTop = item.object.a;
-            const leftDown = item.object.b;
-            this.allLeftTopData = _.orderBy(_.concat(leftTop, this.allLeftTopData), (item) => item[0], ['desc']);
-            this.allLeftDownData = _.sortBy(_.concat(leftDown, this.allLeftDownData), item => item[0]);
-        });
-        const rightDown = _.map(this.tradeData, (item, index) => ({ ...item.object, type: 'trade', id: index }))
-        const leftTop = _.map(this.allLeftTopData, (item, index) => {
-            return {
-                price: item[0],
-                count: item[1],
-                id: index,
+    delData = (received_msg) => {
+        // console.log('===', this.orderbookData, this.tradeData);
+        // let rightDown = [];
+        let leftTop = [];
+        let leftDown = [];
+        if (received_msg.type === 'orderbook') {
+
+            this.orderbookData = received_msg;
+            const orderbookData = this.orderbookData;
+            const leftTopA = orderbookData.object.a;
+            const leftDownB = orderbookData.object.b;
+            // console.log('===================', leftTopA, leftDownB)
+            this.allLeftTopData = _.orderBy(leftTopA, (item) => item[0], ['desc']);
+            this.allLeftDownData = _.sortBy(leftDownB, item => item[0]);
+            // const rightDown = [this.tradeData.object];
+    
+    
+             leftTop = _.map(this.allLeftTopData, (item, index) => {
+                return {
+                    price: item[0],
+                    count: item[1],
+                    id: index,
+                }
+            });
+             leftDown = _.map(this.allLeftDownData, (item, index) => {
+                return {
+                    price: item[0],
+                    count: item[1],
+                    id: index,
+                }
+            })
+        } else {
+            this.tradeData = received_msg;
+
+            if (this.tradeData.object && _.isObject(this.tradeData.object)) {
+                this.allRightDown.unshift(this.tradeData.object)
+                // rightDown = [this.tradeData.object];
+                // rightDown[0].type = 'trade';
+                // rightDown[0].id = '88';
+                this.allRightDown = _.map(this.allRightDown, (item, index) => ({ ...item, id: index, type: 'trade' }))
             }
-        });
-        const leftDown = _.map(this.allLeftDownData, (item, index) => {
-            return {
-                price: item[0],
-                count: item[1],
-                id: index,
-            }
-        })
+        }
+
+       
         // const rightDown = _.map(this.allRightData)
         this.setState({
             leftTop,
             leftDown,
-            rightDown,
+            rightDown: this.allRightDown || [],
         })
-        console.log(this.tradeData);
+        // console.log(this.tradeData);
         // console.log(orderbookData)
 
     }
@@ -258,6 +287,18 @@ class index extends Component {
             accuracy: defaultObj.accuracy,
         })
     }
+    handlePrice = (rule, value, callback) => {
+        console.log(rule);
+        const len = this.state.accuracy;
+        // const reg = /^([0-9]\d)(\.\d{0,4})?$/;
+        // if (reg.test(value)) {
+
+        //     callback();
+        // } else {
+        //     callback(`小数点后最多${len}`)
+        // }
+
+    }
 
     render() {
         console.log(this.state.defaultValue);
@@ -266,17 +307,18 @@ class index extends Component {
             <div className="main-page">
                 <div className="list-title">
                     {/* <Button onClick={this.onWebsocket}>订阅</Button> */}
-                    <Row gutter={12}>
-                        <Col span={6}>
+                    <Row gutter={24}>
+                        <Col span={5}>
                             <p>{this.state.symbols}</p>
                             <div className="table-top">
                                 <Table
                                     size="small"
                                     pagination={false}
                                     rowKey="id"
+                                    className="sell"
                                     dataSource={this.state.leftTop}
                                     columns={columns(this)}
-                                    scroll={{ y: 500 }}
+                                    scroll={{ y: 263 }}
                                 />
                             </div>
                             <div>
@@ -285,14 +327,15 @@ class index extends Component {
                                     size="small"
                                     pagination={false}
                                     rowKey="id"
+                                    className="buy"
                                     dataSource={this.state.leftDown}
                                     columns={columns(this)}
-                                    scroll={{ y: 500 }}
+                                    scroll={{ y: 263 }}
                                 />
 
                             </div>
                         </Col>
-                        <Col span={12} >
+                        <Col span={14} >
                             <Row className="f_select">
                                 <Col span={12}>
                                     <Select defaultValue={this.state.defaultValue} value={this.state.defaultValue} style={{ width: '70%' }} onChange={this.handleChangeSym}>
@@ -302,7 +345,7 @@ class index extends Component {
                                     </Select>
 
                                 </Col>
-                                    <Col span={12}>最新价格：{this.state.rightDown && this.state.rightDown[0]? this.state.rightDown[0].dealPrice : ''}</Col>
+                                <Col span={12}>最新价格：{this.state.rightDown && this.state.rightDown[0] ? this.state.rightDown[0].dealPrice : ''}</Col>
                             </Row>
                             <div className="f_Box">
                                 <div className="f_center">
@@ -310,13 +353,16 @@ class index extends Component {
                                         <h3>买入 {this.state.defaultValue ? this.state.defaultValue.split('_')[0] : ''} </h3>
                                         <Form.Item label="价格" labelCol={{ span: 8 }} wrapperCol={{ span: 16 }}>
                                             {getFieldDecorator('note', {
-                                                rules: [{ required: true, message: '请输入价格！' }],
-                                            })(<Input type="number"/>)}
+                                                rules: [
+                                                    { required: true, message: '请输入价格！' },
+                                                    { validator: this.handlePrice }
+                                                ],
+                                            })(<Input type="number" />)}
                                         </Form.Item>
                                         <Form.Item label="数量" labelCol={{ span: 8 }} wrapperCol={{ span: 16 }}>
                                             {getFieldDecorator('gender', {
                                                 rules: [{ required: true, message: '请输入数量！' }],
-                                            })(<Input  type="number"/>)}
+                                            })(<Input type="number" />)}
                                         </Form.Item>
                                         <Form.Item label="成交额" labelCol={{ span: 8 }} wrapperCol={{ span: 16 }}>
                                             {getFieldDecorator('e', {
@@ -337,14 +383,14 @@ class index extends Component {
                                             {getFieldDecorator('note1', {
                                                 rules: [
                                                     { required: true, message: '请输入价格！' },
-                                                    
+
                                                 ],
-                                            })(<Input  type="number"/>)}
+                                            })(<Input type="number" />)}
                                         </Form.Item>
                                         <Form.Item label="数量" labelCol={{ span: 8 }} wrapperCol={{ span: 16 }}>
                                             {getFieldDecorator('gender1', {
                                                 rules: [{ required: true, message: '请输入数量！' }],
-                                            })(<Input  type="number"/>)}
+                                            })(<Input type="number" />)}
                                         </Form.Item>
                                         <Form.Item label="成交额" labelCol={{ span: 8 }} wrapperCol={{ span: 16 }}>
                                             {getFieldDecorator('e1', {
@@ -360,7 +406,7 @@ class index extends Component {
                                 </div>
                             </div>
                         </Col>
-                        <Col span={6}>
+                        <Col span={5}>
                             <h4>最新成交</h4>
                             <div>
                                 <Table
@@ -370,7 +416,7 @@ class index extends Component {
                                     rowKey="id"
                                     dataSource={this.state.rightDown}
                                     columns={columnsRightDown(this)}
-                                    scroll={{ y: 300 }}
+                                    scroll={{ y: 263 }}
                                 />
                             </div>
                             {/* <div className="table-top">
