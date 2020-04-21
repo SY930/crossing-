@@ -1,8 +1,9 @@
 import React, { Component } from 'react'
 import { Row, Col, Table, Form, Input, Button, Select, message } from 'antd'
-import { getSymbols } from '../../api/detail'
+import { getSymbols, BuyOrder, SellOrder } from '../../api/detail'
 import _ from 'lodash'
 import moment from 'moment';
+import BigNumber from 'bignumber.js';
 
 const Option = Select.Option;
 
@@ -26,7 +27,10 @@ const columns = (app) => ([
         dataIndex: 'sum',
         key: 'sum',
         render: (t, record) => {
-            return (record.price - 0) * (record.count - 0)
+            if (!record.price) return '';
+            const price = record.price - 0;
+            const count = record.count - 0;
+            return new BigNumber(price).multipliedBy(count).decimalPlaces(6, 1).toString();
         }
     }
 ]);
@@ -129,6 +133,9 @@ class index extends Component {
     allLeftTopData = [];
     allLeftDownData = [];
     allRightDown = [];
+    flag = true;
+    flagA = true;
+    flagB = true;
 
     componentDidMount() {
         const url = window.location.hash.split('/')
@@ -151,7 +158,7 @@ class index extends Component {
         const data = {
             code: 1200,
             obj: [{ sym: 'BTC_USDT', accuracy: 4, lotSize: 0.2 }, { sym: 'VET_BTC', accuracy: 4, lotSize: 0.3 }, { sym: 'VET_ETH', accuracy: 4, lotSize: 0.1 }] // lotSize是数量的最小值，accuracy是价格后面小数点最多的位数
-        } 
+        }
         getSymbols().then((data) => {
             const url = window.location.hash.split('/');
             const defaultValue = url[url.length - 1];
@@ -227,31 +234,92 @@ class index extends Component {
         let leftTop = [];
         let leftDown = [];
         if (received_msg.type === 'orderbook') {
-
             this.orderbookData = received_msg;
             const orderbookData = this.orderbookData;
-            const leftTopA = orderbookData.object.a;
-            const leftDownB = orderbookData.object.b;
-            // console.log('===================', leftTopA, leftDownB)
-            this.allLeftTopData = _.orderBy(leftTopA, (item) => item[0], ['desc']);
-            this.allLeftDownData = _.sortBy(leftDownB, item => item[0]);
+            let leftTopA = orderbookData.object.a;
+            let leftDownB = orderbookData.object.b;
+            if (_.isEmpty(leftDownB) && _.isEmpty(leftTopA)){
+                if (this.flag) {
+                    this.oldTime = +new Date();
+                    this.flag = false;
+                }
+                const timeDiff = +new Date() - this.oldTime;
+                // console.log('timeDiff', timeDiff);
+                if (timeDiff > 3000) {
+                     leftTopA = orderbookData.object.a;
+                     leftDownB = orderbookData.object.b;
+                     this.flag = true;
+                     console.log('object', leftTopA, leftDownB);
+                     console.log('timeDiff', timeDiff);
+                } else {
+                    return;
+                }
+             };
+
+             if (_.isEmpty(leftTopA) && !_.isEmpty(leftDownB)) {
+                if (this.flagA) {
+                    this.oldTimeA = +new Date();
+                    this.flagA = false;
+                }
+                const timeDiffA = +new Date() - this.oldTimeA;
+                if (timeDiffA > 3000) {
+                    leftTopA = orderbookData.object.a;
+                     this.flagA = true;
+                } else {
+                    return;
+                }
+             }
+             if (!_.isEmpty(leftTopA) && _.isEmpty(leftDownB)) {
+                if (this.flagB) {
+                    this.oldTimeB = +new Date();
+                    this.flagB = false;
+                }
+                const timeDiffB = +new Date() - this.oldTimeB;
+                if (timeDiffB > 3000) {
+                     leftDownB = orderbookData.object.b;
+                     this.flagB = true;
+                } else {
+                    return;
+                }
+             }
+
+            
+
+             leftTopA = _.orderBy(leftTopA, (item) => item[0] || '', ['desc']);
+             leftDownB = _.orderBy(leftDownB, item => item[0] || '', ['desc']);
             // const rightDown = [this.tradeData.object];
-    
-    
-             leftTop = _.map(this.allLeftTopData, (item, index) => {
+            // console.log('===================', leftTopA,  leftDownB)
+
+            leftTop = _.map(leftTopA, (item, index) => {
                 return {
-                    price: item[0],
-                    count: item[1],
-                    id: index,
+                    price: item[0] || '',
+                    count: item[1] || '',
+                    id: index + 11,
                 }
             });
-             leftDown = _.map(this.allLeftDownData, (item, index) => {
+            if (leftTop.length < 10) {
+                let len = 10 - leftTop.length;
+                // console.log('len', len)
+                while (len) {
+                    leftTop.unshift({ id: len })
+                    len--;
+                }
+            }
+            leftDown = _.map(leftDownB, (item, index) => {
                 return {
-                    price: item[0],
-                    count: item[1],
-                    id: index,
+                    price: item[0] || '',
+                    count: item[1] || '',
+                    id: index + 11,
                 }
             })
+            if (leftDown.length < 10) {
+                let len = 10 - leftDown.length;
+                // console.log('len', len)
+                while (len) {
+                    leftDown.push({ id: len })
+                    len--;
+                }
+            }
         } else {
             this.tradeData = received_msg;
 
@@ -264,7 +332,7 @@ class index extends Component {
             }
         }
 
-       
+
         // const rightDown = _.map(this.allRightData)
         this.setState({
             leftTop,
@@ -279,6 +347,7 @@ class index extends Component {
     handleChangeSym = (value) => {
         // console.log(value);
         // this.onWebsocket(value);
+
         const optSelect = this.state.optSelect;
         const defaultObj = _.filter(optSelect, item => item.sym === value);
         this.setState({
@@ -287,21 +356,167 @@ class index extends Component {
             accuracy: defaultObj.accuracy,
         })
     }
-    handlePrice = (rule, value, callback) => {
-        console.log(rule);
-        const len = this.state.accuracy;
-        // const reg = /^([0-9]\d)(\.\d{0,4})?$/;
-        // if (reg.test(value)) {
-
-        //     callback();
-        // } else {
-        //     callback(`小数点后最多${len}`)
-        // }
+    handleBuyPrice = (rule, value, callback) => {
+        // console.log(rule);
+        const { form } = this.props;
+        const gender = form.getFieldValue('amount');
+        const len = 4;
+        const reg = new RegExp("^\\d+(?:\\.\\d{1," + len + "})?$");
+        // console.log('gender===============', gender)
+        if (reg.test(value)) {
+            if (gender) {
+                const count = (gender - 0) * (value - 0);
+                form.setFieldsValue({
+                    e: count,
+                })
+            } else {
+                form.setFieldsValue({
+                    e: value,
+                })
+            }
+            callback();
+        } else {
+            callback(`小数点后最多${len}`)
+        }
+        if (!value && !gender) {
+            form.setFieldsValue({
+                e: '',
+            })
+        }
 
     }
 
+    handleBuyGender = (rule, value, callback) => {
+        const { form } = this.props;
+        const note = form.getFieldValue('price');
+        const len = 0.2;
+        // const reg = new RegExp("^\\d+(?:\\.\\d{1,"+len+"})?$");
+        // console.log('gender===============', gender)
+        if (value > 0.2) {
+            if (note) {
+                const count = (note - 0) * (value - 0);
+                form.setFieldsValue({
+                    e: count,
+                })
+            } else {
+                form.setFieldsValue({
+                    e: value,
+                })
+            }
+            callback();
+        } else {
+            callback(`数量必须大于${len}`)
+        }
+        if (!value && !note) {
+            form.setFieldsValue({
+                e: '',
+            })
+        }
+
+    }
+
+    handleSellPrice = (rule, value, callback) => {
+        // console.log(rule);
+        const { form } = this.props;
+        const gender = form.getFieldValue('amount1');
+        const len = 4;
+        const reg = new RegExp("^\\d+(?:\\.\\d{1," + len + "})?$");
+        // console.log('gender===============', gender)
+        if (reg.test(value)) {
+            if (gender) {
+                const count = (gender - 0) + (value - 0);
+                form.setFieldsValue({
+                    e1: count,
+                })
+            } else {
+                form.setFieldsValue({
+                    e1: value,
+                })
+            }
+            callback();
+        } else {
+            callback(`小数点后最多${len}`)
+        }
+        if (!value && !gender) {
+            form.setFieldsValue({
+                e1: '',
+            })
+        }
+
+    }
+
+    handleSellGender = (rule, value, callback) => {
+        const { form } = this.props;
+        const note = form.getFieldValue('price1');
+        const len = 0.2;
+        // const reg = new RegExp("^\\d+(?:\\.\\d{1,"+len+"})?$");
+        // console.log('gender===============', gender)
+        if (value > 0.2) {
+            if (note) {
+                const count = (note - 0) + (value - 0);
+                form.setFieldsValue({
+                    e1: count,
+                })
+            } else {
+                form.setFieldsValue({
+                    e1: value,
+                })
+            }
+            callback();
+        } else {
+            callback(`数量必须大于${len}`)
+        }
+        if (!value && !note) {
+            form.setFieldsValue({
+                e1: '',
+            })
+        }
+    }
+
+    handleBuySubmit = (e) => {
+        e.preventDefault();
+        const self = this;
+        const { form: { validateFieldsAndScroll } } = self.props;
+        validateFieldsAndScroll(['price', 'amount', 'e'], (err, values) => {
+            if (!err) {
+                const data = values;
+                data.symbol = this.state.sym;
+                BuyOrder(data).then((res) => {
+                    if (res.code === 1200) {
+                        message.success(res.msg);
+                    } else {
+                        message.error(res.msg);
+                    }
+                }).catch((err) => {
+                    console.log(err);
+                })
+            }
+        })
+    }
+
+    handleSellSubmit = (e) => {
+        e.preventDefault();
+        const self = this;
+        const { form: { validateFieldsAndScroll } } = self.props;
+        validateFieldsAndScroll(['price1', 'amount1', 'e1'], (err, values) => {
+            if (!err) {
+                const data = values;
+                data.symbol = this.state.sym;
+                SellOrder(data).then((res) => {
+                    if (res.code === 1200) {
+                        message.success(res.msg);
+                    } else {
+                        message.error(res.msg);
+                    }
+                }).catch((err) => {
+                    console.log(err);
+                })
+            }
+        })
+    }
+
     render() {
-        console.log(this.state.defaultValue);
+        // console.log(this.state.defaultValue);
         const { getFieldDecorator } = this.props.form;
         return (
             <div className="main-page">
@@ -349,19 +564,22 @@ class index extends Component {
                             </Row>
                             <div className="f_Box">
                                 <div className="f_center">
-                                    <Form labelcol={{ span: 8 }} wrappercol={{ span: 16 }} onSubmit={this.handleSubmit}>
+                                    <Form labelcol={{ span: 8 }} wrappercol={{ span: 16 }} onSubmit={this.handleBuySubmit}>
                                         <h3>买入 {this.state.defaultValue ? this.state.defaultValue.split('_')[0] : ''} </h3>
                                         <Form.Item label="价格" labelCol={{ span: 8 }} wrapperCol={{ span: 16 }}>
-                                            {getFieldDecorator('note', {
+                                            {getFieldDecorator('price', {
                                                 rules: [
                                                     { required: true, message: '请输入价格！' },
-                                                    { validator: this.handlePrice }
+                                                    { validator: this.handleBuyPrice }
                                                 ],
                                             })(<Input type="number" />)}
                                         </Form.Item>
                                         <Form.Item label="数量" labelCol={{ span: 8 }} wrapperCol={{ span: 16 }}>
-                                            {getFieldDecorator('gender', {
-                                                rules: [{ required: true, message: '请输入数量！' }],
+                                            {getFieldDecorator('amount', {
+                                                rules: [
+                                                    { required: true, message: '请输入数量！' },
+                                                    { validator: this.handleBuyGender }
+                                                ],
                                             })(<Input type="number" />)}
                                         </Form.Item>
                                         <Form.Item label="成交额" labelCol={{ span: 8 }} wrapperCol={{ span: 16 }}>
@@ -377,19 +595,23 @@ class index extends Component {
                                     </Form>
                                 </div>
                                 <div className="f_center">
-                                    <Form onSubmit={this.handleSubmit}>
+                                    <Form onSubmit={this.handleSellSubmit}>
                                         <h3>买出 {this.state.defaultValue ? this.state.defaultValue.split('_')[0] : ''} </h3>
                                         <Form.Item label="价格" labelCol={{ span: 8 }} wrapperCol={{ span: 16 }}>
-                                            {getFieldDecorator('note1', {
+                                            {getFieldDecorator('price1', {
                                                 rules: [
                                                     { required: true, message: '请输入价格！' },
+                                                    { validator: this.handleSellPrice }
 
                                                 ],
                                             })(<Input type="number" />)}
                                         </Form.Item>
                                         <Form.Item label="数量" labelCol={{ span: 8 }} wrapperCol={{ span: 16 }}>
-                                            {getFieldDecorator('gender1', {
-                                                rules: [{ required: true, message: '请输入数量！' }],
+                                            {getFieldDecorator('amount1', {
+                                                rules: [
+                                                    { required: true, message: '请输入数量！' },
+                                                    { validator: this.handleSellGender }
+                                                ],
                                             })(<Input type="number" />)}
                                         </Form.Item>
                                         <Form.Item label="成交额" labelCol={{ span: 8 }} wrapperCol={{ span: 16 }}>
@@ -408,7 +630,7 @@ class index extends Component {
                         </Col>
                         <Col span={5}>
                             <h4>最新成交</h4>
-                            <div>
+                            <div className="right_table">
                                 <Table
                                     showHeader={false}
                                     size="small"
@@ -416,7 +638,7 @@ class index extends Component {
                                     rowKey="id"
                                     dataSource={this.state.rightDown}
                                     columns={columnsRightDown(this)}
-                                    scroll={{ y: 263 }}
+                                // scroll={{ y: 263 }}
                                 />
                             </div>
                             {/* <div className="table-top">
@@ -429,7 +651,6 @@ class index extends Component {
                                     scroll={{ y: 300 }}
                                 />
                             </div> */}
-
                         </Col>
                     </Row>
                 </div>

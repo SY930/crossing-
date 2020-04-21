@@ -44,7 +44,9 @@
     text-align: left;
   }
   .ant-table-thead> tr> th, .ant-table-tbody > tr > td {
-    line-height: 10px;
+    
+    height: 25px;
+    padding: 0 8px !important;
   }
 
   .sell {
@@ -57,7 +59,19 @@
       color: green;
     }
   }
-  .ant-table-scroll {
-    height: 263px;
+  .ant-table-content {
+    position: relative;
+    .ant-table-placeholder {
+      position: absolute;
+      top: 0;
+      width: 100%;}
+  }
+  .ant-table-body {
+    height: 250px;
+  }
+  .right_table {
+    .ant-table-body {
+      height: 463px;
+    }
   }
 }
