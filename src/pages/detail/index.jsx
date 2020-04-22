@@ -138,20 +138,11 @@ class index extends Component {
     flagB = true;
 
     componentDidMount() {
-        const url = window.location.hash.split('/')
-        console.log(url[url.length - 1])
-        this.sym = url[url.length - 1];
-        const symbol = url[url.length - 1].split('_');
-        const symbols = `${symbol[0]}/${symbol[1]}`
-        this.setState({
-            symbols,
-            sym: this.sym,
-        }, () => {
-            this.initSocket();
-        })
+
+        this.getExchangeSymbols()
+      
         // this.initSocket(this.state.orderbookData);
         // this.initSocket(this.state.tradeData);
-        this.getExchangeSymbols()
     }
 
     getExchangeSymbols = () => {
@@ -160,15 +151,21 @@ class index extends Component {
             obj: [{ sym: 'BTC_USDT', accuracy: 4, lotSize: 0.2 }, { sym: 'VET_BTC', accuracy: 4, lotSize: 0.3 }, { sym: 'VET_ETH', accuracy: 4, lotSize: 0.1 }] // lotSize是数量的最小值，accuracy是价格后面小数点最多的位数
         }
         getSymbols().then((data) => {
-            const url = window.location.hash.split('/');
-            const defaultValue = url[url.length - 1];
-            const defaultObj = _.filter(data.obj, item => item.sym === defaultValue);
+            // const url = window.location.hash.split('/');
+            // const defaultValue = url[url.length - 1];
+            const defaultObj = data.obj[0];
+            const symbol = defaultObj.sym.split('_');
+            const symbols = `${symbol[0]}/${symbol[1]}`
             if (data.code === 1200) {
                 this.setState({
+                    symbols,
+                    sym: defaultObj.sym,
                     optSelect: data.obj,
-                    defaultValue,
-                    lotSize: defaultObj[0].lotSize,
-                    accuracy: defaultObj[0].accuracy,
+                    defaultValue: defaultObj.sym,
+                    lotSize: defaultObj.lotSize,
+                    accuracy: defaultObj.accuracy,
+                }, () => {
+                    this.initSocket();
                 })
             }
         })
@@ -185,7 +182,11 @@ class index extends Component {
         if ("WebSocket" in window) {
             //    alert("您的浏览器支持 WebSocket!");     
             // 打开一个 web socket
-            this.ws = new WebSocket("ws://172.16.11.196:9305/websocket/client123");
+            let url = `52.221.122.70`
+            if (process.env.NODE_ENV === 'production') {
+                url = `${window.location.hostname}`;
+            }
+            this.ws = new WebSocket(`ws://${url}:9305/websocket/client123`);
             this.ws.onopen = function () {
                 self.onWebsocket(self.state.sym);
             };
@@ -194,8 +195,10 @@ class index extends Component {
                 // console.log(evt);
                 const received_msg = JSON.parse(evt.data);
                 // console.log('object', JSON.parse(received_msg));
-
-                self.delData(received_msg);
+                if (received_msg.object.sym === self.state.sym || received_msg.type === 'trade'){
+                    self.delData(received_msg);
+                }
+              
                 //   alert("数据已接收...");
             };
 
@@ -242,27 +245,39 @@ class index extends Component {
                 if (this.flag) {
                     this.oldTime = +new Date();
                     this.flag = false;
+                    this.flagA = true;
+                    this.flagB = true;
                 }
                 const timeDiff = +new Date() - this.oldTime;
-                // console.log('timeDiff', timeDiff);
+                // console.log('timeDiff', timeDiff, this.oldTime, +new Date());
                 if (timeDiff > 3000) {
                      leftTopA = orderbookData.object.a;
                      leftDownB = orderbookData.object.b;
                      this.flag = true;
-                     console.log('object', leftTopA, leftDownB);
-                     console.log('timeDiff', timeDiff);
+                    //  console.log('object', leftTopA, leftDownB);
+                    //  console.log('timeDiff', timeDiff);
                 } else {
                     return;
                 }
              };
+             if (!_.isEmpty(leftTopA) && !_.isEmpty(leftDownB)) {
+                this.flag = true;
+                this.flagA = true;
+                this.flagB = true;
+             }
 
              if (_.isEmpty(leftTopA) && !_.isEmpty(leftDownB)) {
                 if (this.flagA) {
                     this.oldTimeA = +new Date();
                     this.flagA = false;
+                    this.flag = true;
+                    this.flagB = true;
                 }
+     
                 const timeDiffA = +new Date() - this.oldTimeA;
+                // console.log('timeDiffA========', timeDiffA, this.oldTime, +new Date());
                 if (timeDiffA > 3000) {
+                    // console.log('timeDiffA======', timeDiffA);
                     leftTopA = orderbookData.object.a;
                      this.flagA = true;
                 } else {
@@ -273,6 +288,8 @@ class index extends Component {
                 if (this.flagB) {
                     this.oldTimeB = +new Date();
                     this.flagB = false;
+                    this.flag = true;
+                    this.flagA = true;
                 }
                 const timeDiffB = +new Date() - this.oldTimeB;
                 if (timeDiffB > 3000) {
@@ -320,7 +337,7 @@ class index extends Component {
                     len--;
                 }
             }
-        } else {
+        } else if (received_msg.type === 'trade') {
             this.tradeData = received_msg;
 
             if (this.tradeData.object && _.isObject(this.tradeData.object)) {
@@ -346,14 +363,19 @@ class index extends Component {
 
     handleChangeSym = (value) => {
         // console.log(value);
-        // this.onWebsocket(value);
-
+        const symbol = value.split('_');
+        const symbols = `${symbol[0]}/${symbol[1]}`
         const optSelect = this.state.optSelect;
         const defaultObj = _.filter(optSelect, item => item.sym === value);
         this.setState({
             defaultValue: value,
             lotSize: defaultObj.lotSize,
             accuracy: defaultObj.accuracy,
+            symbols,
+            sym: value,
+        }, () => {
+            this.ws.onclose();
+            this.initSocket();
         })
     }
     handleBuyPrice = (rule, value, callback) => {
@@ -424,7 +446,7 @@ class index extends Component {
         // console.log('gender===============', gender)
         if (reg.test(value)) {
             if (gender) {
-                const count = (gender - 0) + (value - 0);
+                const count = (gender - 0) * (value - 0);
                 form.setFieldsValue({
                     e1: count,
                 })
@@ -453,7 +475,7 @@ class index extends Component {
         // console.log('gender===============', gender)
         if (value > 0.2) {
             if (note) {
-                const count = (note - 0) + (value - 0);
+                const count = (note - 0) * (value - 0);
                 form.setFieldsValue({
                     e1: count,
                 })
@@ -523,7 +545,7 @@ class index extends Component {
                 <div className="list-title">
                     {/* <Button onClick={this.onWebsocket}>订阅</Button> */}
                     <Row gutter={24}>
-                        <Col span={5}>
+                        <Col span={6}>
                             <p>{this.state.symbols}</p>
                             <div className="table-top">
                                 <Table
@@ -550,7 +572,7 @@ class index extends Component {
 
                             </div>
                         </Col>
-                        <Col span={14} >
+                        <Col span={12} >
                             <Row className="f_select">
                                 <Col span={12}>
                                     <Select defaultValue={this.state.defaultValue} value={this.state.defaultValue} style={{ width: '70%' }} onChange={this.handleChangeSym}>
@@ -596,7 +618,7 @@ class index extends Component {
                                 </div>
                                 <div className="f_center">
                                     <Form onSubmit={this.handleSellSubmit}>
-                                        <h3>买出 {this.state.defaultValue ? this.state.defaultValue.split('_')[0] : ''} </h3>
+                                        <h3>卖出 {this.state.defaultValue ? this.state.defaultValue.split('_')[0] : ''} </h3>
                                         <Form.Item label="价格" labelCol={{ span: 8 }} wrapperCol={{ span: 16 }}>
                                             {getFieldDecorator('price1', {
                                                 rules: [
@@ -628,7 +650,7 @@ class index extends Component {
                                 </div>
                             </div>
                         </Col>
-                        <Col span={5}>
+                        <Col span={6}>
                             <h4>最新成交</h4>
                             <div className="right_table">
                                 <Table
