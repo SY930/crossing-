@@ -209,13 +209,16 @@ class index extends Component {
             let userNameObj = localStorage.getItem('layui');
             let userName = ''
             if (userNameObj) {
-                userName = JSON.parse(userNameObj.token).userName;
+                // message.error(userNameObj.token);
+                const token = JSON.parse(userNameObj).token;
+                userName = JSON.parse(token).userName;
+                this.account = userName;
             }
             if (!userName) {
                 message.error('用户未登录！请重新登录');
-                window.location.href = '/login';
+                // window.location.href = '/login';
             }
-            this.ws = new WebSocket(`ws://${url}:9305/websocket/client123${userName}`);
+            this.ws = new WebSocket(`ws://${url}:9305/websocket/${userName}`);
             this.ws.onopen = function () {
                 self.onWebsocket(self.state.sym);
             };
@@ -252,13 +255,13 @@ class index extends Component {
 
     onWebsocket = (sym) => {
         const orderbookObj = {
-            account: 'client123',
+            account: this.account,
             event: 'subscribe',
             tag: 'orderbook',
             sym
         }
         const tradeObj = {
-            account: 'client123',
+            account: this.account,
             event: 'subscribe',
             tag: 'trade',
             sym
@@ -455,7 +458,7 @@ class index extends Component {
         }, () => {
             this.allRightDown = [];
             this.ws.send(JSON.stringify({
-                account: 'client123',
+                account: this.account,
                 event: 'unsubscribe',
                 tag: 'orderbook',
                 sym: oldSym,
