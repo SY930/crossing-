@@ -8,13 +8,12 @@ import SymboDetail from './pages/detail';
 
 
 ReactDOM.render(
-    <Router>
         <App>
-            <Switch>
+            <SymboDetail></SymboDetail>
+            {/* <Switch> */}
                 {/* <Route exact path={'/'} component={SymboDetail} /> */}
-                <Route exact path={'/!algoorder6'} component={SymboDetail} />
-            </Switch>
-        </App>
-    </Router>, document.getElementById('root'));
+                {/* <Route exact path={'!algoorder6'} component={SymboDetail} />
+            </Switch> */}
+        </App>, document.getElementById('root'));
 
 
