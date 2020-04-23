@@ -182,7 +182,7 @@ class index extends Component {
         if ("WebSocket" in window) {
             //    alert("您的浏览器支持 WebSocket!");     
             // 打开一个 web socket
-            // let url = `52.221.122.70`
+            // let url = `52.221.122.70`;
             let url = 'http://172.16.11.196';
             if (process.env.NODE_ENV === 'production') {
                 url = `${window.location.hostname}`;
@@ -206,8 +206,9 @@ class index extends Component {
                 //   alert("数据已接收...");
             };
 
-            this.ws.onclose = function () {
+            this.ws.onclose = () => {
                 // 关闭 websocket
+                this.ws.onopen();
                 // message.error("连接已关闭...");
             };
         }
@@ -283,80 +284,125 @@ class index extends Component {
         //     this.flagA = true;
         //     this.flagB = true;
         // }
-        if(!_.isEmpty(leftTopA)) {
-            this.flagA = true;
-        }
-        if (!_.isEmpty(leftDownB)){
-            this.flagB = true;
-        }
-
-        if (_.isEmpty(leftTopA)) {
-            if (this.flagA) {
-                this.oldTimeA = +new Date();
-                this.flagA = false;
-                // this.flagB = true;
+        // console.log('object------', _.isEmpty([]))
+        // console.log('=======', 'a:', leftTopA, 'b:', leftDownB)
+        if (!_.isEmpty(leftTopA)) {
+            // this.flagA = true;
+            this.oldTimeA = +new Date();
+            leftTopA = _.orderBy(leftTopA, (item) => item[0] || '', ['desc']);
+            leftTop = _.map(leftTopA, (item, index) => {
+                return {
+                    price: item[0] || '',
+                    count: item[1] || '',
+                    id: index + 11,
+                }
+            });
+            if (leftTop.length < 10) {
+                let len = 10 - leftTop.length;
+                // console.log('len', len)
+                while (len) {
+                    leftTop.unshift({ id: len })
+                    len--;
+                }
             }
+            // const rightDown = _.map(this.allRightData)
+            this.setState({
+                leftTop,
+            })
+        } else {
             const timeDiffA = +new Date() - this.oldTimeA;
             if (timeDiffA > 3000) {
+                console.log('timeDiffA=====', timeDiffA, this.oldTimeA, +new Date())
                 leftTopA = orderbookData.object.a;
-                // this.flagA = true;
+                leftTopA = _.orderBy(leftTopA, (item) => item[0] || '', ['desc']);
+                leftTop = _.map(leftTopA, (item, index) => {
+                    return {
+                        price: item[0] || '',
+                        count: item[1] || '',
+                        id: index + 11,
+                    }
+                });
+                if (leftTop.length < 10) {
+                    let len = 10 - leftTop.length;
+                    // console.log('len', len)
+                    while (len) {
+                        leftTop.unshift({ id: len })
+                        len--;
+                    }
+                }
+                // const rightDown = _.map(this.allRightData)
+                this.setState({
+                    leftTop,
+                })
             }
         }
-        if (_.isEmpty(leftDownB)) {
-            if (this.flagB) {
-                this.oldTimeB = +new Date();
-                this.flagB = false;
-                // this.flagA = true;
+        if (!_.isEmpty(leftDownB)) {
+            // this.flagB = true;
+            this.oldTimeB = +new Date();
+            leftDownB = _.orderBy(leftDownB, item => item[0] || '', ['desc']);
+            leftDown = _.map(leftDownB, (item, index) => {
+                return {
+                    price: item[0] || '',
+                    count: item[1] || '',
+                    id: index + 11,
+                }
+            })
+            if (leftDown.length < 10) {
+                let len = 10 - leftDown.length;
+                // console.log('len', len)
+                while (len) {
+                    leftDown.push({ id: len })
+                    len--;
+                }
             }
+            this.setState({
+                leftDown,
+            })
+        } else {
             const timeDiffB = +new Date() - this.oldTimeB;
             if (timeDiffB > 3000) {
                 leftDownB = orderbookData.object.b;
                 // this.flagB = true;
+                leftDownB = _.orderBy(leftDownB, item => item[0] || '', ['desc']);
+                leftDown = _.map(leftDownB, (item, index) => {
+                    return {
+                        price: item[0] || '',
+                        count: item[1] || '',
+                        id: index + 11,
+                    }
+                })
+                if (leftDown.length < 10) {
+                    let len = 10 - leftDown.length;
+                    // console.log('len', len)
+                    while (len) {
+                        leftDown.push({ id: len })
+                        len--;
+                    }
+                }
+                this.setState({
+                    leftDown,
+                })
             }
         }
 
-        leftTopA = _.orderBy(leftTopA, (item) => item[0] || '', ['desc']);
-        leftDownB = _.orderBy(leftDownB, item => item[0] || '', ['desc']);
-        // const rightDown = [this.tradeData.object];
-        // console.log('===================', leftTopA,  leftDownB)
+        // if (_.isEmpty(leftTopA)) {
+        //     if (this.flagA) {
 
-        leftTop = _.map(leftTopA, (item, index) => {
-            return {
-                price: item[0] || '',
-                count: item[1] || '',
-                id: index + 11,
-            }
-        });
-        if (leftTop.length < 10) {
-            let len = 10 - leftTop.length;
-            // console.log('len', len)
-            while (len) {
-                leftTop.unshift({ id: len })
-                len--;
-            }
-        }
-        leftDown = _.map(leftDownB, (item, index) => {
-            return {
-                price: item[0] || '',
-                count: item[1] || '',
-                id: index + 11,
-            }
-        })
-        if (leftDown.length < 10) {
-            let len = 10 - leftDown.length;
-            // console.log('len', len)
-            while (len) {
-                leftDown.push({ id: len })
-                len--;
-            }
-        }
+        //         this.flagA = false;
+        //         // this.flagB = true;
+        //     }
+
+        // }
+        // if (_.isEmpty(leftDownB)) {
+        //     if (this.flagB) {
+        //         this.oldTimeB = +new Date();
+        //         this.flagB = false;
+        //         // this.flagA = true;
+        //     }
+
+        // }
 
 
-        // const rightDown = _.map(this.allRightData)
-        this.setState({
-            leftTop,
-            leftDown,
-        })
         // console.log(this.tradeData);
         // console.log(orderbookData)
 
@@ -375,6 +421,7 @@ class index extends Component {
             symbols,
             sym: value,
         }, () => {
+            this.allRightDown = [];
             this.ws.onclose();
             this.initSocket();
         })
