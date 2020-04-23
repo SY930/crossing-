@@ -209,11 +209,11 @@ class index extends Component {
             let userNameObj = localStorage.getItem('layui');
             let userName = ''
             if (userNameObj) {
-                userName = JSON.parse(userNameObj).token.userName;
+                userName = JSON.parse(userNameObj.token).userName;
             }
             if (!userName) {
-                // message.error('用户未登录！请重新登录');
-                // window.location.href = '/login';
+                message.error('用户未登录！请重新登录');
+                window.location.href = '/login';
             }
             this.ws = new WebSocket(`ws://${url}:9305/websocket/client123${userName}`);
             this.ws.onopen = function () {
