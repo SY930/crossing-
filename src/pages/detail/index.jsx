@@ -133,9 +133,11 @@ class index extends Component {
     allLeftTopData = [];
     allLeftDownData = [];
     allRightDown = [];
-    flag = true;
-    flagA = true;
-    flagB = true;
+    ws = null;
+    timer = {
+        interval: 5000,
+        handler: null,
+    }
 
     componentDidMount() {
 
@@ -143,6 +145,13 @@ class index extends Component {
 
         // this.initSocket(this.state.orderbookData);
         // this.initSocket(this.state.tradeData);
+    }
+
+    componentWillMount() {
+        if (this.timer) {
+            clearInterval(this.timer.handler);
+            this.timer.handler = null;
+        }
     }
 
     getExchangeSymbols = () => {
@@ -166,9 +175,19 @@ class index extends Component {
                     accuracy: defaultObj.accuracy,
                 }, () => {
                     this.initSocket();
+                    this.loopSend();
                 })
             }
         })
+    }
+
+    loopSend = () => {
+        const self = this;
+        this.timer.handler = setInterval(() => {
+            if (self.ws) {
+                this.ws.send('ping');
+            }
+        }, this.timer.interval)
     }
 
     initSocket = () => {
@@ -182,34 +201,46 @@ class index extends Component {
         if ("WebSocket" in window) {
             //    alert("您的浏览器支持 WebSocket!");     
             // 打开一个 web socket
-            // let url = `52.221.122.70`;
-            let url = 'http://172.16.11.196';
+            let url = `52.221.122.70`;
+            // let url = 'http://172.16.11.196';
             if (process.env.NODE_ENV === 'production') {
                 url = `${window.location.hostname}`;
             }
-            this.ws = new WebSocket(`ws://${url}:9305/websocket/client123${+new Date()}`);
+            let userNameObj = localStorage.getItem('layui');
+            let userName = ''
+            if (userNameObj) {
+                userName = JSON.parse(userNameObj).token.userName;
+            }
+            if (!userName) {
+                // message.error('用户未登录！请重新登录');
+                // window.location.href = '/login';
+            }
+            this.ws = new WebSocket(`ws://${url}:9305/websocket/client123${userName}`);
             this.ws.onopen = function () {
                 self.onWebsocket(self.state.sym);
             };
 
             this.ws.onmessage = function (evt) {
                 // console.log(evt);
-                const received_msg = JSON.parse(evt.data);
-                // console.log('object', JSON.parse(received_msg));
-                if (received_msg.object.sym === self.state.sym && received_msg.type === 'orderbook') {
-                    self.delOrderData(received_msg);
+                try {
+                    const received_msg = JSON.parse(evt.data);
+                    // console.log('object', JSON.parse(received_msg));
+                    if (received_msg.object.sym === self.state.sym && received_msg.type === 'orderbook') {
+                        self.delOrderData(received_msg);
+                    }
+                    if (received_msg.type === 'trade') {
+                        self.delTradeData(received_msg);
+                    }
+                } catch (error) {
+                    
                 }
-                if (received_msg.type === 'trade') {
-                    self.delTradeData(received_msg);
-                }
+               
 
                 //   alert("数据已接收...");
             };
 
             this.ws.onclose = () => {
-                // 关闭 websocket
-                this.ws.onopen();
-                // message.error("连接已关闭...");
+               
             };
         }
 
@@ -414,6 +445,7 @@ class index extends Component {
         const symbols = `${symbol[0]}/${symbol[1]}`
         const optSelect = this.state.optSelect;
         const defaultObj = _.filter(optSelect, item => item.sym === value);
+        const oldSym = this.state.sym;
         this.setState({
             defaultValue: value,
             lotSize: defaultObj.lotSize,
@@ -422,8 +454,13 @@ class index extends Component {
             sym: value,
         }, () => {
             this.allRightDown = [];
-            this.ws.onclose();
-            this.initSocket();
+            this.ws.send(JSON.stringify({
+                account: 'client123',
+                event: 'unsubscribe',
+                tag: 'orderbook',
+                sym: oldSym,
+            }));
+            this.onWebsocket(this.state.sym);
         })
     }
     handleBuyPrice = (rule, value, callback) => {
