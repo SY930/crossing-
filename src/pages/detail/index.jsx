@@ -14,19 +14,32 @@ const columns = (app) => ([
         key: 'price',
         className: 'price',
         width: 90,
+        render: (text) => {
+            if (text || text === 0) {
+                return (new BigNumber(text).decimalPlaces(6, 1).toString())
+            }
+            return '';
+        }
     },
     {
         title: '数量',
         dataIndex: 'count',
         key: 'count',
         align: 'left',
-        width: 70,
+        width: 90,
+        render: (text) => {
+            if (text || text === 0) {
+                return (new BigNumber(text).decimalPlaces(6, 1).toString())
+            }
+            return '';
+        }
     },
     {
         title: '成交额',
         dataIndex: 'sum',
         key: 'sum',
         render: (t, record) => {
+            if (record.price === 0 || record.count === 0) return '0';
             if (!record.price) return '';
             const price = record.price - 0;
             const count = record.count - 0;
@@ -58,11 +71,23 @@ const columnsRightDown = (app) => ([
         title: '价格',
         dataIndex: 'dealPrice',
         key: 'dealPrice',
+        render: (text) => {
+            if (text || text === 0) {
+                return (new BigNumber(text).decimalPlaces(6, 1).toString())
+            }
+            return '';
+        }
     },
     {
         title: '数量',
         dataIndex: 'dealCount',
         key: 'dealCount',
+        render: (text) => {
+            if (text || text === 0) {
+                return (new BigNumber(text).decimalPlaces(6, 1).toString())
+            }
+            return '';
+        }
     },
     {
         title: '时间',
@@ -135,8 +160,12 @@ class index extends Component {
     allRightDown = [];
     ws = null;
     timer = {
-        interval: 5000,
+        interval: 5000 * 12,
         handler: null,
+    }
+    timerSocket = {
+        interval: 5000,
+        hanler: null,
     }
 
     componentDidMount() {
@@ -151,6 +180,10 @@ class index extends Component {
         if (this.timer) {
             clearInterval(this.timer.handler);
             this.timer.handler = null;
+        }
+        if (this.timerSocket) {
+            clearInterval(this.timerSocket.handler);
+            this.timerSocket.handler = null;
         }
     }
 
@@ -216,7 +249,13 @@ class index extends Component {
             }
             if (!userName) {
                 message.error('用户未登录！请重新登录');
-                // window.location.href = '/login';
+                window.location.href = '/login';
+            }
+
+            if (this.ws) {
+                clearInterval(this.timerSocket.handler);
+                this.timerSocket.handler = null;
+                return;
             }
             this.ws = new WebSocket(`ws://${url}:9305/websocket/${userName}`);
             this.ws.onopen = function () {
@@ -235,15 +274,17 @@ class index extends Component {
                         self.delTradeData(received_msg);
                     }
                 } catch (error) {
-                    
+
                 }
-               
+
 
                 //   alert("数据已接收...");
             };
 
             this.ws.onclose = () => {
-               
+                // message.error('已断开');
+                this.ws = null;
+                this.onconnect();
             };
         }
 
@@ -251,6 +292,32 @@ class index extends Component {
             // 浏览器不支持 WebSocket
             message.error("您的浏览器不支持 WebSocket!");
         }
+    }
+
+    onconnect = () => {
+        if (!this.ws) {
+            this.timerSocket.handler = setInterval(() => {
+                this.initSocket();
+            }, this.timerSocket.interval)
+        } else {
+            clearInterval(this.timerSocket.handler);
+            this.timerSocket.handler = null;
+        }
+    }
+
+    unsubscribe = (oldSym) => {
+        this.ws.send(JSON.stringify({
+            account: this.account,
+            event: 'unsubscribe',
+            tag: 'orderbook',
+            sym: oldSym,
+        }));
+        this.ws.send(JSON.stringify({
+            account: this.account,
+            event: 'unsubscribe',
+            tag: 'trade',
+            sym: oldSym,
+        }));
     }
 
     onWebsocket = (sym) => {
@@ -356,14 +423,14 @@ class index extends Component {
                         id: index + 11,
                     }
                 });
-                if (leftTop.length < 10) {
-                    let len = 10 - leftTop.length;
-                    // console.log('len', len)
-                    while (len) {
-                        leftTop.unshift({ id: len })
-                        len--;
-                    }
-                }
+                // if (leftTop.length < 10) {
+                //     let len = 10 - leftTop.length;
+                //     // console.log('len', len)
+                //     while (len) {
+                //         leftTop.unshift({ id: len })
+                //         len--;
+                //     }
+                // }
                 // const rightDown = _.map(this.allRightData)
                 this.setState({
                     leftTop,
@@ -405,14 +472,14 @@ class index extends Component {
                         id: index + 11,
                     }
                 })
-                if (leftDown.length < 10) {
-                    let len = 10 - leftDown.length;
-                    // console.log('len', len)
-                    while (len) {
-                        leftDown.push({ id: len })
-                        len--;
-                    }
-                }
+                // if (leftDown.length < 10) {
+                //     let len = 10 - leftDown.length;
+                //     // console.log('len', len)
+                //     while (len) {
+                //         leftDown.push({ id: len })
+                //         len--;
+                //     }
+                // }
                 this.setState({
                     leftDown,
                 })
@@ -444,26 +511,35 @@ class index extends Component {
 
     handleChangeSym = (value) => {
         // console.log(value);
+        const { form } = this.props;
         const symbol = value.split('_');
         const symbols = `${symbol[0]}/${symbol[1]}`
         const optSelect = this.state.optSelect;
         const defaultObj = _.filter(optSelect, item => item.sym === value);
         const oldSym = this.state.sym;
+        console.log('defaultObj', defaultObj)
+        
         this.setState({
             defaultValue: value,
-            lotSize: defaultObj.lotSize,
-            accuracy: defaultObj.accuracy,
+            lotSize: defaultObj[0].lotSize,
+            accuracy: defaultObj[0].accuracy,
             symbols,
             sym: value,
+            leftTop: [],
+            leftDown: [],
         }, () => {
             this.allRightDown = [];
-            this.ws.send(JSON.stringify({
-                account: this.account,
-                event: 'unsubscribe',
-                tag: 'orderbook',
-                sym: oldSym,
-            }));
+            this.unsubscribe(oldSym);
             this.onWebsocket(this.state.sym);
+            form.setFieldsValue({
+                price: '',
+                amount: '',
+                amount1: '',
+                price1: '',
+                e: '',
+                e1: '',
+            })
+            // this.handleBuyGender();
         })
     }
     handleBuyPrice = (rule, value, callback) => {
@@ -499,10 +575,11 @@ class index extends Component {
     handleBuyGender = (rule, value, callback) => {
         const { form } = this.props;
         const note = form.getFieldValue('price');
-        const len = 0.2;
+        // console.log('this.state.lotSize', this.state.lotSize)
+        const len = this.state.lotSize - 0;
         // const reg = new RegExp("^\\d+(?:\\.\\d{1,"+len+"})?$");
         // console.log('gender===============', gender)
-        if (value > 0.2) {
+        if (value > len) {
             if (note) {
                 const count = (note - 0) * (value - 0);
                 form.setFieldsValue({
@@ -558,10 +635,10 @@ class index extends Component {
     handleSellGender = (rule, value, callback) => {
         const { form } = this.props;
         const note = form.getFieldValue('price1');
-        const len = 0.2;
+        const len = this.state.lotSize - 0;
         // const reg = new RegExp("^\\d+(?:\\.\\d{1,"+len+"})?$");
         // console.log('gender===============', gender)
-        if (value > 0.2) {
+        if (value > len) {
             if (note) {
                 const count = (note - 0) * (value - 0);
                 form.setFieldsValue({
@@ -699,7 +776,7 @@ class index extends Component {
                                         </Form.Item>
                                         <Form.Item wrapperCol={{ span: 12, offset: 8 }} style={{ marginTop: 25 }}>
                                             <Button type="primary" htmlType="submit">
-                                                卖出
+                                                买入
                                         </Button>
                                         </Form.Item>
                                     </Form>
@@ -731,7 +808,7 @@ class index extends Component {
                                         </Form.Item>
                                         <Form.Item wrapperCol={{ span: 12, offset: 8 }} style={{ marginTop: 25 }}>
                                             <Button type="primary" htmlType="submit">
-                                                买入
+                                                卖出
                                             </Button>
                                         </Form.Item>
                                     </Form>
