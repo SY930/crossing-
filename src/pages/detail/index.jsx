@@ -699,7 +699,7 @@ class index extends Component {
                                         </Form.Item>
                                         <Form.Item wrapperCol={{ span: 12, offset: 8 }} style={{ marginTop: 25 }}>
                                             <Button type="primary" htmlType="submit">
-                                                Submit
+                                                卖出
                                         </Button>
                                         </Form.Item>
                                     </Form>
@@ -731,7 +731,7 @@ class index extends Component {
                                         </Form.Item>
                                         <Form.Item wrapperCol={{ span: 12, offset: 8 }} style={{ marginTop: 25 }}>
                                             <Button type="primary" htmlType="submit">
-                                                Submit
+                                                买入
                                             </Button>
                                         </Form.Item>
                                     </Form>
