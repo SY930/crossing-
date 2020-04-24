@@ -13,10 +13,10 @@ const columns = (app) => ([
         dataIndex: 'price',
         key: 'price',
         className: 'price',
-        width: 90,
+        width: '30.33%',
         render: (text) => {
             if (text || text === 0) {
-                return (new BigNumber(text).decimalPlaces(6, 1).toString())
+                return (new BigNumber(text).precision(6).toString())
             }
             return '';
         }
@@ -26,10 +26,10 @@ const columns = (app) => ([
         dataIndex: 'count',
         key: 'count',
         align: 'left',
-        width: 90,
+        width: '28.33%',
         render: (text) => {
             if (text || text === 0) {
-                return (new BigNumber(text).decimalPlaces(6, 1).toString())
+                return (new BigNumber(text).precision(6).toString())
             }
             return '';
         }
@@ -38,12 +38,13 @@ const columns = (app) => ([
         title: '成交额',
         dataIndex: 'sum',
         key: 'sum',
+        width: '32.33%',
         render: (t, record) => {
             if (record.price === 0 || record.count === 0) return '0';
             if (!record.price) return '';
             const price = record.price - 0;
             const count = record.count - 0;
-            return new BigNumber(price).multipliedBy(count).decimalPlaces(6, 1).toString();
+            return new BigNumber(price).multipliedBy(count).precision(6).toString();
         }
     }
 ]);
@@ -73,7 +74,7 @@ const columnsRightDown = (app) => ([
         key: 'dealPrice',
         render: (text) => {
             if (text || text === 0) {
-                return (new BigNumber(text).decimalPlaces(6, 1).toString())
+                return (new BigNumber(text).precision(6, 1).toString())
             }
             return '';
         }
@@ -84,7 +85,7 @@ const columnsRightDown = (app) => ([
         key: 'dealCount',
         render: (text) => {
             if (text || text === 0) {
-                return (new BigNumber(text).decimalPlaces(6, 1).toString())
+                return (new BigNumber(text).precision(6, 1).toString())
             }
             return '';
         }
