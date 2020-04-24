@@ -692,7 +692,7 @@ class index extends Component {
                                                 ],
                                             })(<Input type="number" />)}
                                         </Form.Item>
-                                        <Form.Item label="成交额" labelCol={{ span: 8 }} wrapperCol={{ span: 16 }}>
+                                        <Form.Item label="金额" labelCol={{ span: 8 }} wrapperCol={{ span: 16 }}>
                                             {getFieldDecorator('e', {
                                                 rules: [{ required: true, message: 'Please select your gender!' }],
                                             })(<Input disabled />)}
@@ -724,7 +724,7 @@ class index extends Component {
                                                 ],
                                             })(<Input type="number" />)}
                                         </Form.Item>
-                                        <Form.Item label="成交额" labelCol={{ span: 8 }} wrapperCol={{ span: 16 }}>
+                                        <Form.Item label="金额" labelCol={{ span: 8 }} wrapperCol={{ span: 16 }}>
                                             {getFieldDecorator('e1', {
                                                 rules: [{ required: true, message: 'Please select your gender!' }],
                                             })(<Input disabled />)}
