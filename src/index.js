@@ -1,6 +1,5 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { HashRouter as Router, Route, Switch } from 'react-router-dom';
 import 'antd/dist/antd.css';
 import './assets/scss/index.scss';
 import App from './pages/App';

@@ -1,11 +1,12 @@
 import React, { Component } from 'react'
-import { Row, Col, Table, Form, Input, Button, Select, message } from 'antd'
-import { getSymbols, BuyOrder, SellOrder } from '../../api/detail'
+import { Row, Col, Table, Form, Input, Button, Select, message, Pagination, Tabs } from 'antd'
+import { getSymbols, BuyOrder, SellOrder, GetOrders, RecallOrder } from '../../api/detail'
 import _ from 'lodash'
 import moment from 'moment';
 import BigNumber from 'bignumber.js';
 
 const Option = Select.Option;
+const TabPane = Tabs.TabPane;
 
 const columns = (app) => ([
     {
@@ -49,21 +50,70 @@ const columns = (app) => ([
     }
 ]);
 
-const columnsRight = (app) => ([
+
+const columnsTable = (app) => ([
     {
-        title: '交易对',
-        dataIndex: 'time',
-        key: 'time',
+        title: 'symbol',
+        dataIndex: 'symbol',
+        key: 'symbol',
     },
     {
-        title: '价格',
-        dataIndex: 'avg',
-        key: 'avg',
+        title: '订单类型',
+        dataIndex: 'orderType',
+        key: 'orderType',
+        render: (text) => {
+            if (text === 1) {
+                return '普通订单';
+            } else if (text === 2) {
+                return '标识DAY（过期自动撤销）';
+            } else if (text === 3) {
+                return 'FOK（全部成交否则失败）';
+            }
+            return '-';
+        }
     },
     {
-        title: '涨跌',
-        dataIndex: 'med',
-        key: 'med',
+        title: '订单价格',
+        dataIndex: 'orderPrice',
+        key: 'orderPrice',
+    },
+    {
+        title: '订单数量',
+        dataIndex: 'orderNum',
+        key: 'orderNum',
+    },
+    {
+        title: '成交数量',
+        dataIndex: 'dealNum',
+        key: 'dealNum',
+    },
+    {
+        title: '状态',
+        dataIndex: 'states',
+        key: 'states',
+        render: (text) => {
+            if (text === 0) {
+                return '初始状态';
+            } else if (text === 1) {
+                return '部分成功';
+            } else if (text === 2) {
+                return '完全成交';
+            } else if (text === 3) {
+                return '撤销';
+            }
+            return '-';
+        }
+    },
+    {
+        title: '操作',
+        render: (t, record) => {
+            if (record.states === 0 || record.states === 1) {
+                return (
+                    <Button type="danger" size="small" onClick={() => app.cancelOrder(record)}>撤单</Button>
+                )
+            }
+
+        }
     }
 ])
 
@@ -110,6 +160,8 @@ class index extends Component {
         defaultValue: '',
         accuracy: 0,
         lotSize: 0,
+        activeTab: '1',
+        tabIndex: 0,
         sym: '',
         orderbookData: {
             state: true,
@@ -168,13 +220,38 @@ class index extends Component {
         interval: 5000,
         hanler: null,
     }
+    timerOrders = {
+        interval: 5000,
+        handler: null,
+    }
+    pagination = [
+        {
+            total: 1,
+            page: 0,
+            size: 10,
+            pageSizeOptions: ['10', '20', '50', '100'],
+        }, {
+            total: 1,
+            page: 0,
+            size: 10,
+            pageSizeOptions: ['10', '20', '50', '100'],
+        }, {
+            total: 1,
+            page: 0,
+            size: 10,
+            pageSizeOptions: ['10', '20', '50', '100'],
+        }
+    ];
 
     componentDidMount() {
 
         this.getExchangeSymbols()
-
+        this.getOrders();
         // this.initSocket(this.state.orderbookData);
         // this.initSocket(this.state.tradeData);
+        this.timerOrders.handler = setInterval(() => {
+            this.getOrders(this.state.tabIndex);
+        }, this.timerOrders.interval)
     }
 
     componentWillMount() {
@@ -186,6 +263,31 @@ class index extends Component {
             clearInterval(this.timerSocket.handler);
             this.timerSocket.handler = null;
         }
+        if (this.timerOrders) {
+            clearInterval(this.timerOrders.handler);
+            this.timerOrders.handler = null;
+        }
+    }
+
+    onPageChange = (tabIndex, current) => {
+        this.pagination[tabIndex].page = current - 1;
+        this.getOrders(tabIndex);
+    }
+
+    onShowSizeChange = (tabIndex, current, size) => {
+        this.pagination[tabIndex].page = current - 1;
+        this.pagination[tabIndex].size = size;
+        this.getOrders(tabIndex);
+    }
+
+    onTabsClicked = (key) => {
+        this.setState({
+            activeTab: key,
+            tabIndex: (key - 0) -1
+        }, () => {
+            // const tabIndex = (key - 0) -1
+           this.getOrders(this.state.tabIndex);
+        });
     }
 
     getExchangeSymbols = () => {
@@ -214,6 +316,28 @@ class index extends Component {
             }
         })
     }
+
+    getOrders = (tabIndex = 0) => {
+        let userName = localStorage.getItem('layui');
+        if (userName) {
+            userName = JSON.parse(userName).token.userName;
+        }
+        const status = (tabIndex - 0) + 1;
+        const url = `/api/getOrdersPage?page=${this.pagination[tabIndex].page}&pageSize=${this.pagination[tabIndex].size}&account=admin4564766&status=${status}`;
+        GetOrders(url).then((data) => {
+            if (data.code === 1200) {
+                this.pagination[tabIndex].total = data.obj.totleNum;
+                const obj = {};
+                obj[`tableList${tabIndex}`] = _.map(data.obj.result || [], (item, index) => ({...item, id: index, ...item.cancelMessage}));
+                this.setState(obj)
+            } else {
+                message.error(data.obj.msg);
+            }
+        }).catch((err) => {
+            console.log(err)
+        })
+    }
+
 
     loopSend = () => {
         const self = this;
@@ -573,6 +697,18 @@ class index extends Component {
 
     }
 
+    cancelOrder = (record) => {
+        RecallOrder(record).then((data) => {
+            if (data.code === 1200) {
+                message.success(data.msg)
+            } else {
+                message.error(data.msg)
+            }
+        }).catch((error) => {
+
+        })
+    }
+
     handleBuyGender = (rule, value, callback) => {
         const { form } = this.props;
         const note = form.getFieldValue('price');
@@ -710,7 +846,7 @@ class index extends Component {
             <div className="main-page">
                 <div className="list-title">
                     {/* <Button onClick={this.onWebsocket}>订阅</Button> */}
-                    <Row gutter={24}>
+                    <Row gutter={24} className="list-ws">
                         <Col span={6}>
                             <p>{this.state.symbols}</p>
                             <div className="table-top">
@@ -841,6 +977,58 @@ class index extends Component {
                             </div> */}
                         </Col>
                     </Row>
+                    <div className="list-table">
+                        <Tabs
+                            onChange={this.onTabsClicked}
+                            activeKey={this.state.activeTab}
+                        >
+                            <TabPane tab="进行中" key="1">
+                                <Table
+                                    size="small"
+                                    pagination={false}
+                                    rowKey="id"
+                                    dataSource={this.state.tableList0}
+                                    columns={columnsTable(this)}
+                                />
+                                <Pagination
+                                    showQuickJumper
+                                    className="order-pagination"
+                                    current={this.pagination[0].page + 1}
+                                    onChange={(page) => { this.onPageChange(0, page); }}
+                                    total={this.pagination[0].total}
+                                    showSizeChanger
+                                    onShowSizeChange={(current, size) => { this.onShowSizeChange(0, current, size); }}
+                                    defaultPageSize={this.pagination[0].size}
+                                    pageSize={this.pagination[0].size}
+                                    pageSizeOptions={this.pagination[0].pageSizeOptions}
+                                />
+                            </TabPane>
+                            <TabPane tab="已完成" key="2">
+                                <Table
+                                    pagination={false}
+                                    className="task-orders"
+                                    rowKey="id"
+                                    columns={columnsTable(this)}
+                                    // dataSource={this.filterOrders('all')}
+                                    dataSource={this.state.tableList1}
+                                    size="small"
+                                    // type="fasle"
+                                />
+                                <Pagination
+                                    showQuickJumper
+                                    className="order-pagination"
+                                    current={this.pagination[1].page + 1}
+                                    onChange={(page) => { this.onPageChange(1, page); }}
+                                    total={this.pagination[1].total}
+                                    showSizeChanger
+                                    onShowSizeChange={(current, size) => { this.onShowSizeChange(1, current, size); }}
+                                    defaultPageSize={this.pagination[1].size}
+                                    pageSize={this.pagination[1].size}
+                                    pageSizeOptions={this.pagination[1].pageSizeOptions}
+                                />
+                            </TabPane>
+                        </Tabs>
+                    </div>
                 </div>
             </div>
         )

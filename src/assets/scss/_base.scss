@@ -4,75 +4,85 @@
   .list-title {
     padding: 50px 15px;
   }
-  .table-top {
-    margin-bottom: 20px;
-  }
-  .f_select {
-    margin-bottom: 20px;
-  }
-  .f_Box {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: nowrap;
-    background: rgb(247, 247, 247);
-    border: 1px solid #e2e2e2;
-  }
-  .f_center {
-    display: flex;
-    flex-wrap: wrap;
-    flex-direction: column;
-    min-height: 260px;
-    background: none;
-    flex: 1 1 0%;
-    margin: 15px 0px;
-    padding: 0px 20px;
-    &:first-child {
-      border-right: 1px solid rgb(226, 226, 226);
+  .list-ws {
+    .table-top {
+      margin-bottom: 20px;
     }
-  }
-  .ant-form label {
-    font-size: 12px;
-  }
-  .ant-form-item {
-    margin-bottom: 0;
-  }
-  .ant-input {
-    font-size: 12px;
-    height: 26px;
-  }
-  .ant-form-item-label {
-    text-align: left;
-  }
-  .ant-table-thead> tr> th, .ant-table-tbody > tr > td {
-    
-    height: 25px;
-    padding: 0 8px !important;
-  }
-
-  .sell {
-    td.price{
-      color: red;
+    .f_select {
+      margin-bottom: 20px;
     }
-  }
-  .buy {
-    .price {
-      color: green;
+    .f_Box {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: nowrap;
+      background: rgb(247, 247, 247);
+      border: 1px solid #e2e2e2;
     }
-  }
-  .ant-table-content {
-    position: relative;
-    .ant-table-placeholder {
-      position: absolute;
-      top: 0;
-      width: 100%;}
-  }
-  .ant-table-body {
-    height: 250px;
-  }
-  .right_table {
+    .f_center {
+      display: flex;
+      flex-wrap: wrap;
+      flex-direction: column;
+      min-height: 260px;
+      background: none;
+      flex: 1 1 0%;
+      margin: 15px 0px;
+      padding: 0px 20px;
+      &:first-child {
+        border-right: 1px solid rgb(226, 226, 226);
+      }
+    }
+    .ant-form label {
+      font-size: 12px;
+    }
+    .ant-form-item {
+      margin-bottom: 0;
+    }
+    .ant-input {
+      font-size: 12px;
+      height: 26px;
+    }
+    .ant-form-item-label {
+      text-align: left;
+    }
+    .ant-table-thead> tr> th, .ant-table-tbody > tr > td {
+      
+      height: 25px;
+      padding: 0 8px !important;
+    }
+  
+    .sell {
+      td.price{
+        color: red;
+      }
+    }
+    .buy {
+      .price {
+        color: green;
+      }
+    }
+    .ant-table-content {
+      position: relative;
+      .ant-table-placeholder {
+        position: absolute;
+        top: 0;
+        width: 100%;}
+    }
     .ant-table-body {
-      height: 463px;
-      overflow: hidden !important;
+      height: 250px;
     }
+    .right_table {
+      .ant-table-body {
+        height: 463px;
+        overflow: hidden !important;
+      }
+    }
+  }
+  
+  .list-table {
+    margin-top: 20px;
+  }
+  .order-pagination {
+    margin-top: 10px;
+    text-align: right;
   }
 }
