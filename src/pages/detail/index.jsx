@@ -246,7 +246,7 @@ class index extends Component {
     componentDidMount() {
 
         this.getExchangeSymbols()
-        this.getOrders();
+       
         // this.initSocket(this.state.orderbookData);
         // this.initSocket(this.state.tradeData);
         // this.timerOrders.handler = setInterval(() => {
@@ -311,6 +311,7 @@ class index extends Component {
                     accuracy: defaultObj.accuracy,
                 }, () => {
                     this.initSocket();
+                    this.getOrders();
                     this.loopSend();
                 })
             }
@@ -324,7 +325,7 @@ class index extends Component {
             userName = JSON.parse(token).userName;
         }
         const status = (tabIndex - 0) + 1;
-        const url = `/api/getOrdersPage?page=${this.pagination[tabIndex].page}&pageSize=${this.pagination[tabIndex].size}&account=${userName || ''}&status=${status}`;
+        const url = `/api/getOrdersPage?page=${this.pagination[tabIndex].page}&pageSize=${this.pagination[tabIndex].size}&account=${userName || ''}&status=${status}&symbol=${this.state.sym}`;
         GetOrders(url).then((data) => {
             if (data.code === 1200) {
                 this.pagination[tabIndex].total = data.obj.totleNum;
