@@ -249,9 +249,9 @@ class index extends Component {
         this.getOrders();
         // this.initSocket(this.state.orderbookData);
         // this.initSocket(this.state.tradeData);
-        this.timerOrders.handler = setInterval(() => {
-            this.getOrders(this.state.tabIndex);
-        }, this.timerOrders.interval)
+        // this.timerOrders.handler = setInterval(() => {
+        //     this.getOrders(this.state.tabIndex);
+        // }, this.timerOrders.interval)
     }
 
     componentWillMount() {
@@ -320,10 +320,11 @@ class index extends Component {
     getOrders = (tabIndex = 0) => {
         let userName = localStorage.getItem('layui');
         if (userName) {
-            userName = JSON.parse(userName).token.userName;
+            const token = JSON.parse(userName).token;
+            userName = JSON.parse(token).userName;
         }
         const status = (tabIndex - 0) + 1;
-        const url = `/api/getOrdersPage?page=${this.pagination[tabIndex].page}&pageSize=${this.pagination[tabIndex].size}&account=admin4564766&status=${status}`;
+        const url = `/api/getOrdersPage?page=${this.pagination[tabIndex].page}&pageSize=${this.pagination[tabIndex].size}&account=${userName || ''}&status=${status}`;
         GetOrders(url).then((data) => {
             if (data.code === 1200) {
                 this.pagination[tabIndex].total = data.obj.totleNum;
@@ -343,9 +344,9 @@ class index extends Component {
         const self = this;
         this.timer.handler = setInterval(() => {
             if (self.ws) {
-                this.ws.send('ping');
+                self.ws.send('ping');
             }
-        }, this.timer.interval)
+        }, self.timer.interval)
     }
 
     initSocket = () => {
