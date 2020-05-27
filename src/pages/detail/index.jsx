@@ -53,21 +53,24 @@ const columns = (app) => ([
 
 const columnsTable = (app) => ([
     {
+        title: 'id',
+        dataIndex: 'id',
+        key: 'id',
+    },
+    {
         title: 'symbol',
         dataIndex: 'symbol',
         key: 'symbol',
     },
     {
         title: '订单类型',
-        dataIndex: 'orderType',
-        key: 'orderType',
-        render: (text) => {
+        dataIndex: 'type',
+        key: 'type',
+        render: (text, record) => {
             if (text === 1) {
-                return '普通订单';
+                return '买';
             } else if (text === 2) {
-                return '标识DAY（过期自动撤销）';
-            } else if (text === 3) {
-                return 'FOK（全部成交否则失败）';
+                return '卖';
             }
             return '-';
         }
@@ -91,7 +94,7 @@ const columnsTable = (app) => ([
         title: '状态',
         dataIndex: 'states',
         key: 'states',
-        render: (text) => {
+        render: (text, record) => {
             if (text === 0) {
                 return '初始状态';
             } else if (text === 1) {
@@ -99,6 +102,7 @@ const columnsTable = (app) => ([
             } else if (text === 2) {
                 return '完全成交';
             } else if (text === 3) {
+                if (record.dealNum > 0) return '部分撤销';
                 return '撤销';
             }
             return '-';
@@ -291,10 +295,10 @@ class index extends Component {
     }
 
     getExchangeSymbols = () => {
-        const data = {
-            code: 1200,
-            obj: [{ sym: 'BTC_USDT', accuracy: 4, lotSize: 0.2 }, { sym: 'VET_BTC', accuracy: 4, lotSize: 0.3 }, { sym: 'VET_ETH', accuracy: 4, lotSize: 0.1 }] // lotSize是数量的最小值，accuracy是价格后面小数点最多的位数
-        }
+        // const data = {
+        //     code: 1200,
+        //     obj: [{ sym: 'BTC_USDT', accuracy: 4, lotSize: 0.2 }, { sym: 'VET_BTC', accuracy: 4, lotSize: 0.3 }, { sym: 'VET_ETH', accuracy: 4, lotSize: 0.1 }] // lotSize是数量的最小值，accuracy是价格后面小数点最多的位数
+        // }
         getSymbols().then((data) => {
             // const url = window.location.hash.split('/');
             // const defaultValue = url[url.length - 1];
@@ -330,10 +334,10 @@ class index extends Component {
             if (data.code === 1200) {
                 this.pagination[tabIndex].total = data.obj.totleNum;
                 const obj = {};
-                obj[`tableList${tabIndex}`] = _.map(data.obj.result || [], (item, index) => ({...item, id: index, ...item.cancelMessage}));
+                obj[`tableList${tabIndex}`] = _.map(data.obj.result || [], (item, index) => ({...item, rowKey: index, ...item.cancelMessage}));
                 this.setState(obj)
             } else {
-                message.error(data.obj.msg);
+                message.error(data.msg);
             }
         }).catch((err) => {
             console.log(err)
@@ -988,7 +992,7 @@ class index extends Component {
                                 <Table
                                     size="small"
                                     pagination={false}
-                                    rowKey="id"
+                                    rowKey="rowKey"
                                     dataSource={this.state.tableList0}
                                     columns={columnsTable(this)}
                                 />
@@ -1009,7 +1013,7 @@ class index extends Component {
                                 <Table
                                     pagination={false}
                                     className="task-orders"
-                                    rowKey="id"
+                                    rowKey="rowKey"
                                     columns={columnsTable(this)}
                                     // dataSource={this.filterOrders('all')}
                                     dataSource={this.state.tableList1}

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import qs from 'qs';//querystring  可以把一个对象转换成字符串
+// import qs from 'qs';//querystring  可以把一个对象转换成字符串
 // axios.defaults.baseURL = 'http://localhost:9000';//后端接口的主机和端口号
 axios.defaults.withCredentials = true;//跨域的时候，是否携带cookie
 // axios.defaults.transformRequest = (data = {}) => qs.stringify(data);
