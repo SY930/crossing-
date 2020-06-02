@@ -17,7 +17,7 @@ const columns = (app) => ([
         width: '30.33%',
         render: (text) => {
             if (text || text === 0) {
-                return (new BigNumber(text).decimalPlaces(6).toString())
+                return (new BigNumber(text).precision(6).toString())
             }
             return '';
         }
@@ -36,7 +36,7 @@ const columns = (app) => ([
         }
     },
     {
-        title: '成交额',
+        title: '金额',
         dataIndex: 'sum',
         key: 'sum',
         width: '32.33%',
@@ -677,7 +677,7 @@ class index extends Component {
         // console.log(rule);
         const { form } = this.props;
         const gender = form.getFieldValue('amount');
-        const len = 4;
+        const len = 6;
         const reg = new RegExp("^\\d+(?:\\.\\d{1," + len + "})?$");
         // console.log('gender===============', gender)
         if (reg.test(value)) {
@@ -749,7 +749,7 @@ class index extends Component {
         // console.log(rule);
         const { form } = this.props;
         const gender = form.getFieldValue('amount1');
-        const len = 4;
+        const len = 6;
         const reg = new RegExp("^\\d+(?:\\.\\d{1," + len + "})?$");
         // console.log('gender===============', gender)
         if (reg.test(value)) {
