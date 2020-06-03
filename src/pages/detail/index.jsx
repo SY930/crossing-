@@ -16,8 +16,14 @@ const columns = (app) => ([
         className: 'price',
         width: '30.33%',
         render: (text) => {
-            if (text || text === 0) {
-                return (new BigNumber(text).precision(6).toString())
+            const t = text - 0;
+            if (t || t === 0) {
+                if (t > 10000) {
+                    return (new BigNumber(t).precision(8).toString());
+                } else if (t > 1000) {
+                    return (new BigNumber(t).precision(7).toString())
+                }
+                return (new BigNumber(t).precision(6).toString());
             }
             return '';
         }
