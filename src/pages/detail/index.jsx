@@ -178,8 +178,8 @@ class index extends Component {
             type: 'orderbook',
             object: {
                 sym: "BTC_USDT",
-                a: [["8000", "2"], ["6000", "9"]],
-                b: [["7000", "2"]],
+                a: [["9999", "2"], ["9998", "9"], ["10000", "9"]],
+                b: [["9998", "2"], ["9999", "9"], ["10000", "9"]],
             }
         },
         tradeData: {
@@ -496,6 +496,8 @@ class index extends Component {
         let leftDown = [];
         this.orderbookData = received_msg;
         const orderbookData = this.orderbookData;
+        // const orderbookData = this.state.orderbookData;
+        // console.log('orderbookData', orderbookData)
         let leftTopA = orderbookData.object.a;
         let leftDownB = orderbookData.object.b;
         // if (_.isEmpty(leftDownB) && _.isEmpty(leftTopA)) {
@@ -527,7 +529,7 @@ class index extends Component {
         if (!_.isEmpty(leftTopA)) {
             // this.flagA = true;
             this.oldTimeA = +new Date();
-            leftTopA = _.orderBy(leftTopA, (item) => item[0] || '', ['desc']);
+            leftTopA = _.orderBy(leftTopA, (item) => item[0] - 0 || '', ['desc']);
             leftTop = _.map(leftTopA, (item, index) => {
                 return {
                     price: item[0] || '',
@@ -550,9 +552,9 @@ class index extends Component {
         } else {
             const timeDiffA = +new Date() - this.oldTimeA;
             if (timeDiffA > 3000) {
-                console.log('timeDiffA=====', timeDiffA, this.oldTimeA, +new Date())
+                // console.log('timeDiffA=====', timeDiffA, this.oldTimeA, +new Date())
                 leftTopA = orderbookData.object.a;
-                leftTopA = _.orderBy(leftTopA, (item) => item[0] || '', ['desc']);
+                leftTopA = _.orderBy(leftTopA, (item) => item[0] - 0 || '', ['desc']);
                 leftTop = _.map(leftTopA, (item, index) => {
                     return {
                         price: item[0] || '',
@@ -577,7 +579,7 @@ class index extends Component {
         if (!_.isEmpty(leftDownB)) {
             // this.flagB = true;
             this.oldTimeB = +new Date();
-            leftDownB = _.orderBy(leftDownB, item => item[0] || '', ['desc']);
+            leftDownB = _.orderBy(leftDownB, item => item[0] - 0 || '', ['asc']);
             leftDown = _.map(leftDownB, (item, index) => {
                 return {
                     price: item[0] || '',
@@ -601,7 +603,7 @@ class index extends Component {
             if (timeDiffB > 3000) {
                 leftDownB = orderbookData.object.b;
                 // this.flagB = true;
-                leftDownB = _.orderBy(leftDownB, item => item[0] || '', ['desc']);
+                leftDownB = _.orderBy(leftDownB, item => item[0] - 0 || '', ['asc']);
                 leftDown = _.map(leftDownB, (item, index) => {
                     return {
                         price: item[0] || '',
