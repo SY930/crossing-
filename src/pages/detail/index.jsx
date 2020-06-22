@@ -579,7 +579,7 @@ class index extends Component {
         if (!_.isEmpty(leftDownB)) {
             // this.flagB = true;
             this.oldTimeB = +new Date();
-            leftDownB = _.orderBy(leftDownB, item => item[0] - 0 || '', ['asc']);
+            leftDownB = _.orderBy(leftDownB, item => item[0] - 0 || '', ['desc']);
             leftDown = _.map(leftDownB, (item, index) => {
                 return {
                     price: item[0] || '',
@@ -603,7 +603,7 @@ class index extends Component {
             if (timeDiffB > 3000) {
                 leftDownB = orderbookData.object.b;
                 // this.flagB = true;
-                leftDownB = _.orderBy(leftDownB, item => item[0] - 0 || '', ['asc']);
+                leftDownB = _.orderBy(leftDownB, item => item[0] - 0 || '', ['desc']);
                 leftDown = _.map(leftDownB, (item, index) => {
                     return {
                         price: item[0] || '',
