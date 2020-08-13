@@ -1,6 +1,7 @@
 import React, { Component } from 'react'
 import { Row, Col, Table, Form, Input, Button, Select, message, Pagination, Tabs } from 'antd'
 import { getSymbols, BuyOrder, SellOrder, GetOrders, RecallOrder } from '../../api/detail'
+import ISelect from '../ISelect';
 import _ from 'lodash'
 import moment from 'moment';
 import BigNumber from 'bignumber.js';
@@ -495,8 +496,8 @@ class index extends Component {
         let leftTop = [];
         let leftDown = [];
         this.orderbookData = received_msg;
-        const orderbookData = this.orderbookData;
-        // const orderbookData = this.state.orderbookData;
+        // const orderbookData = this.orderbookData;
+        const orderbookData = this.state.orderbookData;
         // console.log('orderbookData', orderbookData)
         let leftTopA = orderbookData.object.a;
         let leftDownB = orderbookData.object.b;
@@ -891,11 +892,7 @@ class index extends Component {
                         <Col span={12} >
                             <Row className="f_select">
                                 <Col span={12}>
-                                    <Select defaultValue={this.state.defaultValue} value={this.state.defaultValue} style={{ width: '70%' }} onChange={this.handleChangeSym}>
-                                        {
-                                            _.map(this.state.optSelect || [], (item) => (<Option key={`${item.sym}`} value={`${item.sym}`}>{item.sym}</Option>))
-                                        }
-                                    </Select>
+                                    <ISelect defaultValue={this.state.defaultValue} value={this.state.defaultValue} optSelect={this.state.optSelect}  handleChange={this.handleChangeSym}/>
 
                                 </Col>
                                 <Col span={12}>最新价格：{this.state.rightDown && this.state.rightDown[0] ? this.state.rightDown[0].dealPrice : ''}</Col>
